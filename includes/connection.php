@@ -6,7 +6,7 @@ ini_set('display_errors', 0);
 $dbHost     = 'localhost';
 $dbUsername = 'root';
 $dbPassword = '';
-$dbName     = 'menu';
+$dbName     = 'nabil_menu';
 
 // Dynamically determine the base URL based on the folder location relative to Document Root.
 // This allows you to rename the project folder to anything (e.g. 'menu') without breaking links.
@@ -63,7 +63,6 @@ try {
 
 // Include core helpers
 include_once __DIR__ . '/auth.php';
-include_once __DIR__ . '/webp_helper.php';
 ?>
 
 

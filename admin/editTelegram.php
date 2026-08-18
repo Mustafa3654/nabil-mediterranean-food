@@ -20,11 +20,12 @@ if (isset($_POST['update_telegram'])) {
     } else {
         $chat_id = trim($_POST['chat_id'] ?? '');
         $bot_token = trim($_POST['bot_token'] ?? '');
+        $deepseek_api_key = trim($_POST['deepseek_api_key'] ?? '');
 
         // Persist settings
         if ($settings) {
-            $stmt = $conn->prepare("UPDATE settings SET chat_id = ?, bot_token = ? WHERE id = ?");
-            $stmt->bind_param("ssi", $chat_id, $bot_token, $settings['id']);
+            $stmt = $conn->prepare("UPDATE settings SET chat_id = ?, bot_token = ?, deepseek_api_key = ? WHERE id = ?");
+            $stmt->bind_param("sssi", $chat_id, $bot_token, $deepseek_api_key, $settings['id']);
             
             if ($stmt->execute()) {
                 invalidate_settings_cache();
@@ -71,13 +72,15 @@ $csrfToken = ensure_csrf_token();
                 <input type="text" name="bot_token" value="<?php echo htmlspecialchars($settings['bot_token'] ?? ''); ?>" placeholder="e.g. 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11">
             </div>
 
+            <div class="form-group">
+                <label for="deepseek_api_key">DeepSeek API Key (for AI reporting in Telegram — optional)</label>
+                <input type="password" name="deepseek_api_key" value="<?php echo htmlspecialchars($settings['deepseek_api_key'] ?? ''); ?>" placeholder="sk-...">
+                <small style="color:#666; font-size:12px;">Lets the bot answer questions like "list pending orders" or "how many cancelled today". Get a key at platform.deepseek.com. Leave blank to disable this feature.</small>
+            </div>
+
             <button type="submit" name="update_telegram" class="submit-btn">Save Telegram Settings</button>
             <a href="dashboard" class="back-link"><button type="button">BACK</button></a>
         </form>
     </div>
 </body>
 </html>
-
-
-
-

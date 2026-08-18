@@ -39,8 +39,7 @@ $globalHasPhoto = ($globalPhotoCheck && $globalPhotoCheck->num_rows > 0);
 <link rel="stylesheet" href="assets/css/menu.css">
 
 <section class="menu-header">
-    <?php $menuBg = webp_url($settings['menu_bg'] ?? 'assets/images/admin/bgs/menu-bg.jpg'); ?>
-    <img src="<?php echo htmlspecialchars($menuBg); ?>" alt="" class="menu-header-bg-img" fetchpriority="high">
+    <div class="menu-header-bg" style="background-image: url('<?php echo htmlspecialchars($settings['menu_bg'] ?? 'assets/images/admin/bgs/menu-bg.jpg'); ?>');"></div>
     <div class="menu-header-overlay"></div>
     <div class="container">
         <h1>Our Menu</h1>
@@ -60,7 +59,7 @@ $globalHasPhoto = ($globalPhotoCheck && $globalPhotoCheck->num_rows > 0);
                     $iconSrc = !empty($cat['cat_icon']) && filter_var($cat['cat_icon'], FILTER_VALIDATE_URL) === false
                         ? htmlspecialchars($cat['cat_icon'])
                         : '';
-                    $iconHtml = !empty($iconSrc) ? '<img src="'.webp_url($iconSrc).'" class="category-icon" alt="" loading="lazy" width="24" height="24">' : '';
+                    $iconHtml = !empty($iconSrc) ? '<img src="'.$iconSrc.'" class="category-icon" alt="" loading="lazy" width="24" height="24">' : '';
                     echo '<a href="menu?category='.urlencode($cat['cat_name']).'" class="category-tab '.$isActive.'">'.$iconHtml.'<span>'.htmlspecialchars($cat['cat_name']).'</span></a>';
                 }
             }
@@ -123,7 +122,7 @@ $globalHasPhoto = ($globalPhotoCheck && $globalPhotoCheck->num_rows > 0);
                             <?php if (!empty($item['item_pic'])): ?>
                                 <div onclick="openQuickView(this)" style="cursor: pointer; display: block;">
                                 <div class="menu-card-img-container">
-                                    <img src="<?php echo htmlspecialchars(webp_url($item['item_pic'])); ?>" alt="<?php echo htmlspecialchars($item['item_name']); ?>" loading="lazy" class="menu-card-img" width="350" height="250">
+                                    <img src="<?php echo htmlspecialchars($item['item_pic']); ?>" alt="<?php echo htmlspecialchars($item['item_name']); ?>" loading="lazy" class="menu-card-img" width="350" height="250">
                                 </div>
                                 </div>
                             <?php elseif ($globalHasPhoto): ?>
@@ -206,6 +205,15 @@ $globalHasPhoto = ($globalPhotoCheck && $globalPhotoCheck->num_rows > 0);
                 <div class="form-group mb-3">
                     <textarea id="customer-note" placeholder="Special Instructions / Notes (Optional)" class="cart-input" rows="2" style="resize: none;"></textarea>
                 </div>
+                <div class="form-group mb-2">
+                    <select id="order-time-choice" class="cart-input" onchange="document.getElementById('customer-time-wrap').style.display = this.value === 'scheduled' ? 'block' : 'none';">
+                        <option value="asap">As soon as possible</option>
+                        <option value="scheduled">Schedule for a specific time</option>
+                    </select>
+                </div>
+                <div class="form-group mb-3" id="customer-time-wrap" style="display:none;">
+                    <input type="time" id="customer-time" class="cart-input">
+                </div>
             </div>
 
             <button class="checkout-btn" onclick="cart.checkout()" id="main-checkout-btn">
@@ -234,8 +242,8 @@ $globalHasPhoto = ($globalPhotoCheck && $globalPhotoCheck->num_rows > 0);
 </div>
 
 <!-- External JS for Menu -->
-<script src="assets/js/menu.js?v=1.1" defer></script>
-<script src="assets/js/cart.js?v=1.1" defer></script>
+<script src="assets/js/menu.js?v=1.1"></script>
+<script src="assets/js/cart.js?v=1.1"></script>
 
 <?php include 'includes/footer.php' ?>
 

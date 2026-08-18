@@ -14,9 +14,7 @@ $restaurantName = $settings['restaurant_name'] ?? 'Our Kitchen';
 <link rel="stylesheet" href="assets/css/about.css">
 
 <!-- Hero Section -->
-<section class="hero-section contact-hero-section about-hero-section">
-    <?php $aboutBg = webp_url($settings['about_bg'] ?? 'assets/images/admin/bgs/hero-bg.jpg'); ?>
-    <img src="<?php echo htmlspecialchars($aboutBg); ?>" alt="" class="hero-bg-img" fetchpriority="high">
+<section class="hero-section contact-hero-section about-hero-section" style="background-image: url('<?php echo htmlspecialchars($settings['about_bg'] ?? 'assets/images/admin/bgs/hero-bg.jpg'); ?>');">
     <div class="hero-content">
         <h1 class="hero-title reveal-text">Our Story</h1>
         <p class="hero-subtitle reveal-text">Tradition, Passion, and Exquisite Mediterranean Flavors</p>
@@ -40,7 +38,7 @@ if (count($words) > 2) {
             <div class="col-lg-6 mb-5 mb-lg-0">
                 <div class="about-image-container">
                     <div class="about-image-wrapper">
-                        <img src="<?php echo htmlspecialchars(webp_url($settings['about_image'] ?? 'assets/images/admin/bgs/about_story.png')); ?>" alt="Our Legacy" loading="lazy" class="about-img img-fluid" width="600" height="450">
+                        <img src="<?php echo htmlspecialchars($settings['about_image'] ?? 'assets/images/admin/bgs/about_story.png'); ?>" alt="Our Legacy" loading="lazy" class="about-img img-fluid" width="600" height="450">
                         <div class="about-experience-badge">
                             <span class="badge-num"><?php echo htmlspecialchars($settings['about_years'] ?? '15+'); ?></span>
                             <span class="badge-text"><?php echo htmlspecialchars($settings['about_years_label'] ?? 'Years of Tradition'); ?></span>
@@ -121,7 +119,7 @@ if (count($words) > 2) {
         <div class="row align-items-center">
             <div class="col-lg-6 mb-5 mb-lg-0 order-lg-2">
                 <div class="chef-img-wrapper">
-                    <img src="<?php echo htmlspecialchars(webp_url($settings['about_chef_image'] ?? 'assets/images/admin/bgs/about_chef.png')); ?>" alt="Our Chef in Action" loading="lazy" class="chef-img img-fluid" width="600" height="750">
+                    <img src="<?php echo htmlspecialchars($settings['about_chef_image'] ?? 'assets/images/admin/bgs/about_chef.png'); ?>" alt="Our Chef in Action" loading="lazy" class="chef-img img-fluid" width="600" height="750">
                     <span class="chef-badge">Culinary Master</span>
                 </div>
             </div>

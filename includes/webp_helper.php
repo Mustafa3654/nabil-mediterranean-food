@@ -155,49 +155,4 @@ function process_upload_to_webp(
     // Conversion failed — fall back to the original file
     return $db_base_path . $temp_filename;
 }
-
-/**
- * Given an image path, return the WebP alternative if one exists on disk.
- * Falls back to the original path if no WebP file is found.
- *
- * @param string $image_path  Path relative to site root (e.g. 'assets/images/bgs/hero.jpg')
- * @return string  WebP path if available, otherwise the original path.
- */
-function webp_url(string $image_path): string
-{
-    if (empty($image_path)) return $image_path;
-    $ext = strtolower(pathinfo($image_path, PATHINFO_EXTENSION));
-    if ($ext === 'webp') return $image_path;
-    $webp_path = preg_replace('/\.(jpe?g|png|gif)$/i', '.webp', $image_path);
-    $webp_abs  = __DIR__ . '/../' . $webp_path;
-    if (file_exists($webp_abs) && filesize($webp_abs) > 0) {
-        return $webp_path;
-    }
-    return $image_path;
-}
-
-/**
- * Resize an image resource to fit within max dimensions, maintaining aspect ratio.
- *
- * @param resource $image GD image resource
- * @param int $src_w Original width
- * @param int $src_h Original height
- * @param int $max_w Max allowed width
- * @param int $max_h Max allowed height
- * @return resource Resized GD image resource
- */
-function resize_image_to_fit($image, int $src_w, int $src_h, int $max_w = 1400, int $max_h = 1400)
-{
-    if ($src_w <= $max_w && $src_h <= $max_h) return $image;
-    $ratio = min($max_w / $src_w, $max_h / $src_h);
-    $new_w = (int) round($src_w * $ratio);
-    $new_h = (int) round($src_h * $ratio);
-    $resized = imagecreatetruecolor($new_w, $new_h);
-    if (!$resized) return $image;
-    imagepalettetotruecolor($resized);
-    imagealphablending($resized, false);
-    imagesavealpha($resized, true);
-    imagecopyresampled($resized, $image, 0, 0, 0, 0, $new_w, $new_h, $src_w, $src_h);
-    return $resized;
-}
 ?>

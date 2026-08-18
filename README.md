@@ -1,57 +1,67 @@
-# Restaurant Menu Management System
+# Nabil Mediterranean Food — Restaurant Website & Menu Management System
 
-A comprehensive, premium web-based restaurant menu management system built with PHP and MySQL. This application features an elegant **Olive Green & Cream White theme**, persistent **Dark Mode** toggle, active category border glow animations, a user-friendly public interface for customers, and a powerful, centralized admin dashboard.
+The official website and menu management platform for **Nabil Mediterranean Food** (Warrensville Heights, Ohio) — a full PHP/MySQL application with a public storefront, online ordering, and a centralized admin dashboard.
+
+It features an elegant **Olive Green & Cream White theme**, a persistent **Dark Mode** toggle, active category border glow animations, a customer-facing cart with WhatsApp/SMS checkout, and an **AI-powered Telegram assistant** that lets the owner run the restaurant from their phone.
 
 ---
 
 ## 🌟 Features
 
 ### 🍽️ Public Features
-- **Modern Landing Page**: Beautiful, responsive hero section with dynamic background media, customizable headers, highlights, a photo gallery slider, and restaurant opening hours.
-- **Interactive About Page**: Dedicated about page featuring the restaurant's legacy, configurable principles/values card grid, and a chef showcase segment.
-- **Interactive Menu**: Multi-category menu view with active tab transitions, items grid with details, and an integrated shopping cart.
-- **Flexible Cart & Checkout System**: 
+- **Modern Landing Page**: Responsive hero section with dynamic background media, customizable headers, highlights, a photo gallery slider, and restaurant opening hours.
+- **Interactive About Page**: The restaurant's legacy, a configurable principles/values card grid, and a chef showcase segment.
+- **Interactive Menu**: Multi-category menu view with active tab transitions, an items grid with details, and an integrated shopping cart.
+- **Flexible Cart & Checkout System**:
   - Persistent shopping cart stored via `localStorage`.
   - Interactive item controls directly on the menu cards.
-  - Checkout ordering routed through **WhatsApp** or **SMS** based on admin configuration.
-  - Automated combo warning notifications (notifying customers that combo items require an hour preparation time).
-- **Persistent Dark Mode**: Simple sun/moon icon toggle in the navigation bar. Remembers the user's choice across visits using `localStorage`.
-- **Olive Green Design System**: A premium, curated palette consisting of Olive Green (`#42522B`), Cream White (`#F7F5EA`), Dark Charcoal (`#2B2B2A`), and Light Khaki (`#CBB58B`) accents.
+  - Checkout routed through **WhatsApp**, **SMS**, or saved directly as an order — based on admin configuration.
+  - Automated combo warning notifications (combo items require an hour of preparation time).
+- **Online Ordering**: Orders submitted from the cart are persisted to the database and pushed instantly to the owner's Telegram chat.
+- **Persistent Dark Mode**: Sun/moon toggle in the navigation bar, remembered across visits via `localStorage`.
+- **Olive Green Design System**: Olive Green (`#42522B`), Cream White (`#F7F5EA`), Dark Charcoal (`#2B2B2A`), and Light Khaki (`#CBB58B`) accents.
 - **Glowing Hover Effects**: Interactive glowing border animations for active categories, buttons, and links.
-- **Item Details**: Dedicated view showing detailed ingredients, item description, and pricing structure.
-- **Interactive Contact Page**: Reach out via a contact form, easily access location maps, phone number, email, and social media handles. Message submissions can send automated alerts.
-- **Fluid Responsiveness**: Works perfectly across desktops, tablets, and smartphones.
+- **Item Details**: Dedicated view showing detailed ingredients, description, and pricing structure.
+- **Interactive Contact Page**: Contact form, location map, phone, email, and social handles. Submissions are stored and can trigger Telegram alerts.
+- **SEO Ready**: Canonical URLs, structured data (`Restaurant` JSON-LD), `sitemap.xml`, and `robots.txt`.
+- **Fluid Responsiveness**: Works across desktops, tablets, and smartphones.
 
 ### 🛡️ Admin Features
-- **Secure Authentication**: Protected administrator login gateway with session-based security, CSRF protection, and automatic on-the-fly password hashing upgrade for legacy accounts.
-- **Central Dashboard**: Comprehensive overview for editing your categories, items, and platform parameters.
-- **Category Management**:
-  - Add, edit, delete, and re-order menu categories.
-  - Upload custom category images and specific visual icons.
-- **Menu Item Management**:
-  - Full CRUD operations for menu items.
-  - Custom image upload, pricing configurations, and description details.
-  - Set custom ordering so specific dishes highlight at the top.
-- **CSV Import & Export**:
-  - Export all menu items to a CSV file (with Excel UTF-8 BOM support).
-  - Bulk import or update menu items via a CSV file, including category validation.
+- **Secure Authentication**: Session-based admin login with CSRF protection and automatic on-the-fly password hashing upgrade for legacy accounts.
+- **Central Dashboard**: Overview for editing categories, items, and platform parameters.
+- **Category Management**: Add, edit, delete, and re-order categories, with custom images and icons.
+- **Menu Item Management**: Full CRUD, image upload, pricing configuration, descriptions, and custom sort ordering.
+- **Order Management** (`admin/viewOrders.php`): Review incoming orders, customer details, line items, and status.
+- **Contact Inbox** (`admin/viewContacts.php`): Read and manage messages submitted through the contact form.
+- **CSV Import & Export**: Export all menu items (with Excel UTF-8 BOM support) and bulk import/update items via CSV, including category validation.
+- **Automatic WebP Conversion**: Uploaded JPEG/PNG/GIF images are converted to WebP via GD for faster page loads. A one-off `admin/migrate_to_webp.php` script converts legacy images.
 - **System Settings Configuration**:
-  - Customize restaurant branding, name, description, and logo.
-  - Manage contact detail values (address, email, phone, and maps embedding).
-  - Configure background media and banners for individual views (Home, Menu, Contact, About).
-  - Configure landing page sliders/gallery, about text, chef bios, and values grid (icons, titles, descriptions).
-  - Set custom opening hour displays.
-  - Configure Telegram bot credentials to route customer inquiries directly to your Telegram chat.
+  - Restaurant branding, name, description, and logo.
+  - Contact details (address, email, phone, maps embed).
+  - Background media and banners per view (Home, Menu, Contact, About).
+  - Landing page sliders/gallery, about text, chef bios, and values grid.
+  - Custom opening hour displays.
+  - Telegram bot credentials for routing inquiries and orders to a Telegram chat.
+
+### 🤖 Telegram AI Assistant
+`telegram_webhook.php` turns the owner's Telegram chat into a control panel, backed by an LLM:
+- **Order status by natural language** — "15 ready", "cancel order 12".
+- **Questions answered** — "list pending orders", "how many cancelled today".
+- **Menu management** — add items, add categories, change prices.
+- **Destructive actions are guarded** — deleting an item or category always requires an explicit `YES` confirmation reply.
+- **One-tap customer texting** — when an order is marked *Ready for Pickup*, the bot attaches a "Text customer" button that opens the phone's Messages app with a pre-filled message (via the `sms_redirect.php` https → `sms:` bridge, since Telegram only permits https links on inline buttons).
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Backend**: PHP 7.2+ (Supports MySQLi prepared queries)
+- **Backend**: PHP 7.2+ (MySQLi prepared statements)
 - **Database**: MySQL 5.7+ / MariaDB 10.3+
-- **Frontend**: HTML5, CSS3 (Custom properties/variables), Vanilla JavaScript
+- **Frontend**: HTML5, CSS3 (custom properties), Vanilla JavaScript
+- **Images**: GD library for WebP conversion
 - **Icons**: Font Awesome v5/v6 CDN
-- **Server Environment**: Apache (fully compatible with local XAMPP/WampServer installs via `.htaccess` rewrites)
+- **Integrations**: Telegram Bot API, DeepSeek (AI assistant)
+- **Server Environment**: Apache with `mod_rewrite` (works locally on XAMPP/WampServer via `.htaccess`)
 
 ---
 
@@ -59,8 +69,8 @@ A comprehensive, premium web-based restaurant menu management system built with 
 
 - PHP 7.2 or higher
 - MySQL 5.7+ or MariaDB 10.3+
-- Apache web server with rewrite module (`mod_rewrite`) enabled
-- Required PHP Extensions: `mysqli`, `session`, `file uploads` enabled
+- Apache web server with `mod_rewrite` enabled
+- PHP extensions: `mysqli`, `gd`, `curl`, sessions and file uploads enabled
 
 ---
 
@@ -68,51 +78,67 @@ A comprehensive, premium web-based restaurant menu management system built with 
 
 ### Step 1: Copy Files to Web Root
 
-Copy the entire project folder to your local server's directory:
 - **XAMPP**: `C:\xampp\htdocs\rest_menu\`
 - **WampServer**: `C:\wamp64\www\rest_menu\`
 - **Linux/Mac**: `/var/www/html/rest_menu/`
 
+The project resolves its own base URL dynamically, so the folder can be renamed freely.
+
 ### Step 2: Database Setup
 
-1. Start your Apache and MySQL database server.
-2. Open phpMyAdmin: [http://localhost/phpmyadmin]
-3. Create a new database named `menu` (UTF-8 Unicode collation recommended).
-4. Go to **Import**, select `Databases/menu.sql` (sample database) or `Databases/empty_menu.sql` (fresh database), and click **Go** to complete database import.
+1. Start Apache and MySQL.
+2. Open phpMyAdmin: <http://localhost/phpmyadmin>
+3. Create a database named `nabil_menu` (UTF-8 Unicode collation recommended).
+4. Go to **Import** and select either:
+   - `Databases/nabil_menu.sql` — full schema with the live menu content, or
+   - `Databases/empty_nabil_menu.sql` — schema only, for a fresh start.
 
 ### Step 3: Database Connection Configuration
 
-Edit **[includes/connection.php]** to match your local server credentials. The project automatically determines the base URL dynamically:
+Edit [includes/connection.php](includes/connection.php) to match your server credentials:
 
 ```php
-$dbHost = 'localhost';
-$dbUsername = 'root';      // Your MySQL username
-$dbPassword = '';          // Your MySQL password
-$dbName = 'menu';          // Database name
+$dbHost     = 'localhost';
+$dbUsername = 'root';        // Your MySQL username
+$dbPassword = '';            // Your MySQL password
+$dbName     = 'nabil_menu';  // Database name
 ```
 
 ### Step 4: Configure Write Permissions
 
-Ensure your server has write privileges on the folders designated for uploaded assets:
-- `assets/images/admin/bgs/` - Logo and background images
-- `assets/images/admin/pics/` - Gallery and vibe images
-- `assets/images/items/` - Menu item thumbnails
+Ensure the upload directories are writable:
+- `assets/images/admin/bgs/` — logo and background images
+- `assets/images/admin/pics/` — gallery and vibe images
+- `assets/images/items/` — menu item thumbnails
 
-On Linux or Mac environments:
+On Linux or Mac:
+
 ```bash
-chmod 755 assets/images/admin/bgs/
-chmod 755 assets/images/admin/pics/
-chmod 755 assets/images/items/
+chmod 755 assets/images/admin/bgs/ assets/images/admin/pics/ assets/images/items/
 ```
 
-### Step 5: Default Admin Credentials
+### Step 5: Admin Credentials
 
-Access the dashboard and log in using the pre-configured credentials:
+The SQL dumps in this repository ship with a placeholder admin account:
+
 - **Username**: `admin`
-- **Password**: `admin2`
+- **Password**: `CHANGE_ME`
 
 > [!WARNING]
-> Ensure you change the password immediately in the database or admin interface after initial setup for production security.
+> Set a real password before exposing the site. Log in once with a value you set in the `users` table and the login system will transparently upgrade it to a bcrypt hash.
+
+### Step 6: Configure Integrations (optional)
+
+Credentials are **not** stored in this repository — set them from the admin panel after install:
+
+- **Telegram**: create a bot with [@BotFather](https://t.me/BotFather), then enter the bot token and your chat ID under `admin/editTelegram.php`.
+- **Webhook**: point the bot at the deployed webhook so the AI assistant receives messages:
+
+```bash
+curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://your-domain.com/telegram_webhook.php"
+```
+
+- **AI assistant**: add a DeepSeek API key in the settings page to enable natural-language order and menu management.
 
 ---
 
@@ -122,11 +148,17 @@ Access the dashboard and log in using the pre-configured credentials:
 rest_menu/
 ├── .htaccess               # Apache configuration for security and clean URL redirections
 ├── README.md               # System documentation
+├── robots.txt              # Crawler directives
+├── sitemap.xml             # SEO sitemap
+├── favicon.png             # Site icon
 ├── index.php               # Public homepage / landing page
 ├── about.php               # Public legacy & story page
 ├── menu.php                # Public interactive menu page with cart system
 ├── ingredients.php         # Dedicated menu item details page
 ├── contact.php             # Contact and location page with form and Telegram notifications
+├── save_order.php          # Order submission endpoint (persists order + notifies Telegram)
+├── telegram_webhook.php    # AI-powered Telegram bot webhook (orders, menu, Q&A)
+├── sms_redirect.php        # https -> sms: bridge for the bot's "Text customer" button
 ├── login.php               # Secure admin login gateway
 ├── logout.php              # Session destroyer script
 │
@@ -140,11 +172,14 @@ rest_menu/
 │   ├── editItem.php        # Update existing menu items
 │   ├── deleteItem.php      # Delete menu items
 │   ├── viewItems.php       # Menu items listing, CSV triggers, and management
+│   ├── viewOrders.php      # Incoming customer orders and statuses
+│   ├── viewContacts.php    # Contact form inbox
 │   ├── editSettings.php    # General website parameters, banners, values, & branding setup
 │   ├── editTelegram.php    # Telegram bot configuration management
 │   ├── exportItems.php     # Export menu items to CSV format
 │   ├── importItems.php     # Bulk import/update menu items from CSV format
-│   └── manageGallery.php   # Gallery and slider settings
+│   ├── manageGallery.php   # Gallery and slider settings
+│   └── migrate_to_webp.php # One-off conversion of legacy images to WebP
 │
 ├── assets/                 # Static assets
 │   ├── css/                # Modular styling system
@@ -177,22 +212,24 @@ rest_menu/
 │
 ├── includes/               # Common shared templates & logic
 │   ├── auth.php            # Admin session authentication and CSRF security handlers
-│   ├── connection.php      # MySQL database connection configuration and dynamic base URL setup
+│   ├── connection.php      # MySQL connection configuration and dynamic base URL setup
+│   ├── webp_helper.php     # Reusable GD-based WebP conversion helpers
 │   ├── header.php          # Site layout top navigation header component
 │   └── footer.php          # Site layout footer component
 │
 └── Databases/              # Database SQL scripts
-    ├── menu.sql            # Core database schema with sample data
-    └── empty_menu.sql      # Fresh database schema structure
+    ├── nabil_menu.sql          # Schema with live menu data (secrets redacted)
+    └── empty_nabil_menu.sql    # Fresh schema structure only
 ```
 
 ---
 
 ## 🎨 Styling & Color Customization
 
-The system features a centralized palette configuration. Rather than chasing colors through individual page stylesheets, global tokens are set inside [assets/css/theme.css](file:///d:/xampp/htdocs/rest_menu/assets/css/theme.css):
+The system features a centralized palette configuration. Rather than chasing colors through individual page stylesheets, global tokens are set inside [assets/css/theme.css](assets/css/theme.css):
 
-### Active Theme variables (`:root` light theme):
+### Active theme variables (`:root` light theme)
+
 ```css
 :root {
     --olive-green: #42522B;      /* Brand accent color */
@@ -202,7 +239,8 @@ The system features a centralized palette configuration. Rather than chasing col
 }
 ```
 
-### Persistent Dark Mode variables:
+### Persistent dark mode variables
+
 ```css
 body.dark-mode {
     --bg-color: #1a1f11;         /* Deep olive-infused dark base */
@@ -217,22 +255,30 @@ body.dark-mode {
 
 ## 🔒 Security Best Practices
 
-1. **CSRF Protection**: State-changing POST requests inside the admin panel are protected by a random token verification check generated per-session.
-2. **On-The-Fly Password Hashing**: The login system automatically upgrades plain-text password credentials to modern PHP secure password hashes (`PASSWORD_DEFAULT` using bcrypt) on successful login.
-3. **SQL Injection Security**: Always use MySQLi prepared queries containing parameter binding for all dynamic parameters in both public and admin files.
-4. **Upload Filtering**: Enforce mime-type checks and size limits on image file uploads in `admin/addItem.php`, `admin/addCategory.php`, and `admin/editSettings.php`.
+1. **No secrets in the repo**: the SQL dumps ship with the Telegram bot token, AI API key, and admin password redacted. Configure real values through the admin panel after install, and never commit them back.
+2. **CSRF protection**: state-changing POST requests in the admin panel are verified against a per-session random token.
+3. **On-the-fly password hashing**: the login system upgrades plain-text credentials to bcrypt (`PASSWORD_DEFAULT`) on successful login.
+4. **SQL injection safety**: use MySQLi prepared statements with bound parameters for every dynamic value, in both public and admin files.
+5. **Upload filtering**: MIME-type checks and size limits are enforced on image uploads in `admin/addItem.php`, `admin/addCategory.php`, and `admin/editSettings.php`.
+6. **Guarded bot actions**: the Telegram assistant never deletes an item or category without an explicit `YES` reply.
 
 ---
 
 ## 🔍 Troubleshooting
 
-### ❌ Database Connection Failure
-- Verify all database parameters (host, user, pass, database name) inside **[includes/connection.php](file:///d:/xampp/htdocs/rest_menu/includes/connection.php)**.
-- Ensure the local MySQL service is active in your control panel.
+### ❌ Database connection failure
+- Verify host, user, password, and database name in [includes/connection.php](includes/connection.php).
+- Ensure the MySQL service is running in your control panel.
 
-### ❌ Uploaded Images Do Not Render
-- Check file system directory permissions on the `assets/images/` directories (`admin/bgs/`, `admin/pics/`, `items/`).
-- Ensure the standard PHP values `upload_max_filesize` and `post_max_size` inside `php.ini` allow file transfers up to the size of your images.
+### ❌ Uploaded images do not render
+- Check permissions on the `assets/images/` subdirectories (`admin/bgs/`, `admin/pics/`, `items/`).
+- Ensure `upload_max_filesize` and `post_max_size` in `php.ini` are large enough.
+- WebP conversion requires the `gd` extension with WebP support — confirm via `phpinfo()`.
 
-### ❌ Dark Mode State Resets
-- Ensure your web browser has `localStorage` permissions enabled. The state resides inside a persistent client-side database key named `theme`.
+### ❌ Telegram bot is silent
+- Confirm the webhook is registered: `https://api.telegram.org/bot<TOKEN>/getWebhookInfo`.
+- The webhook URL must be publicly reachable over HTTPS — it will not work from `localhost`.
+- Verify the bot token and chat ID saved in `admin/editTelegram.php`.
+
+### ❌ Dark mode state resets
+- Ensure the browser allows `localStorage`. The state lives under the key `theme`.

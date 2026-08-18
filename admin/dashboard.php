@@ -22,6 +22,7 @@ check_session_timeout(30);
             <a href="viewItems" class="dashboard-button">View Items</a>
             <a href="viewCategories" class="dashboard-button">View Categories</a>
             <a href="viewOrders" class="dashboard-button">View Orders</a>
+            <a href="viewContacts" class="dashboard-button">View Contacts</a>
             <a href="editSettings" class="dashboard-button" style="grid-column: 1 / -1; background: #42522B;">Global Settings</a>
 
             <a href="<?php echo $BASE_URL; ?>index" class="dashboard-button" style="background:#6c757d;">Back to Site</a>

@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.3
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 18, 2026 at 03:20 PM
+-- Generation Time: Aug 18, 2026 at 11:24 PM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- PHP Version: 8.5.4
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,8 +18,25 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `empty menu`
+-- Database: `nabil_menu`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `bot_pending_actions`
+--
+
+CREATE TABLE `bot_pending_actions` (
+  `id` int(11) NOT NULL,
+  `chat_id` varchar(64) NOT NULL,
+  `action_type` varchar(40) NOT NULL,
+  `payload` text NOT NULL,
+  `summary` text NOT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `categories`
@@ -90,10 +107,12 @@ CREATE TABLE `orders` (
   `customer_name` varchar(255) DEFAULT NULL,
   `total_usd` decimal(10,2) DEFAULT 0.00,
   `whatsapp_number` varchar(20) DEFAULT NULL,
-  `notes` text DEFAULT NULL,
-  `status` enum('pending','sent','cancelled') DEFAULT 'pending',
+  `status` varchar(20) NOT NULL DEFAULT 'pending',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `completed_at` datetime DEFAULT NULL
+  `completed_at` datetime DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `requested_time` varchar(20) DEFAULT NULL,
+  `items` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -113,8 +132,8 @@ CREATE TABLE `settings` (
   `restaurant_description` text DEFAULT NULL,
   `opening_hours` varchar(255) DEFAULT NULL,
   `opening_title` varchar(255) DEFAULT 'Open Daily',
-  `home_bg` varchar(255) DEFAULT 'assets/images/admin/bgs/home-bg.jpg',
-  `menu_bg` varchar(255) DEFAULT 'assets/images/admin/bgs/menu-bg.jpg',
+  `home_bg` varchar(255) DEFAULT 'bgs/home-bg.jpg',
+  `menu_bg` varchar(255) DEFAULT 'bgs/menu-bg.jpg',
   `contact_bg` varchar(255) DEFAULT NULL,
   `whatsapp_number` varchar(50) DEFAULT NULL,
   `instagram_url` varchar(255) DEFAULT NULL,
@@ -123,6 +142,8 @@ CREATE TABLE `settings` (
   `bot_token` text NOT NULL,
   `country_code` varchar(10) NOT NULL,
   `order_method` varchar(50) DEFAULT 'whatsapp',
+  `banner1_visible` tinyint(1) NOT NULL DEFAULT 1,
+  `banner2_visible` tinyint(1) NOT NULL DEFAULT 1,
   `banner1_t1` varchar(255) DEFAULT 'THANK YOU FOR SUPPORTING LOCAL',
   `banner1_t2` varchar(255) DEFAULT 'Made with fresh ingredients & lots of love',
   `banner1_t3` varchar(255) DEFAULT 'AUTHENTIC MEDITERRANEAN FLAVOR',
@@ -134,8 +155,8 @@ CREATE TABLE `settings` (
   `about_subtitle` varchar(255) DEFAULT 'Our Legacy',
   `about_desc1` text DEFAULT NULL,
   `about_desc2` text DEFAULT NULL,
-  `about_image` varchar(255) DEFAULT 'assets/images/admin/bgs/about_story.png',
-  `about_chef_image` varchar(255) DEFAULT 'assets/images/admin/bgs/about_chef.png',
+  `about_image` varchar(255) DEFAULT 'admin/bgs/about_story.png',
+  `about_chef_image` varchar(255) DEFAULT 'admin/bgs/about_chef.png',
   `about_chef_title` varchar(255) DEFAULT 'The Passion Behind the Plate',
   `about_chef_subtitle` varchar(255) DEFAULT 'Handcrafted Culinary Artistry',
   `about_chef_name` varchar(255) DEFAULT 'Nabil',
@@ -143,7 +164,7 @@ CREATE TABLE `settings` (
   `about_chef_bio2` text DEFAULT NULL,
   `about_years` varchar(50) DEFAULT '15+',
   `about_years_label` varchar(255) DEFAULT 'Years of Tradition',
-  `about_bg` varchar(255) DEFAULT 'assets/images/admin/bgs/hero-bg.jpg',
+  `about_bg` varchar(255) DEFAULT 'admin/bgs/hero-bg.jpg',
   `values_title` varchar(255) DEFAULT 'What We Stand For',
   `values_subtitle` varchar(255) DEFAULT 'Our Principles',
   `values_desc` text DEFAULT NULL,
@@ -158,7 +179,10 @@ CREATE TABLE `settings` (
   `value3_desc` text DEFAULT NULL,
   `value4_icon` varchar(100) DEFAULT 'fas fa-hands-helping',
   `value4_title` varchar(255) DEFAULT 'Warm Hospitality',
-  `value4_desc` text DEFAULT NULL
+  `value4_desc` text DEFAULT NULL,
+  `show_cart` tinyint(1) NOT NULL DEFAULT 1,
+  `deepseek_api_key` text DEFAULT NULL,
+  `notify_contact_telegram` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -179,11 +203,17 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `username`, `userpassword`, `isAdmin`) VALUES
-(1, 'admin', 'admin2', 1);
+(1, 'admin', 'CHANGE_ME', 1);
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `bot_pending_actions`
+--
+ALTER TABLE `bot_pending_actions`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `categories`
@@ -237,6 +267,12 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `bot_pending_actions`
+--
+ALTER TABLE `bot_pending_actions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
@@ -246,7 +282,7 @@ ALTER TABLE `categories`
 -- AUTO_INCREMENT for table `contact_submissions`
 --
 ALTER TABLE `contact_submissions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `gallery`

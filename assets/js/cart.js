@@ -45,6 +45,9 @@ class Cart {
             if (method === 'sms') {
                 btnText.textContent = 'Send Order via SMS';
                 btnIcon.className = 'fas fa-sms';
+            } else if (method === 'telegram') {
+                btnText.textContent = 'Send Order';
+                btnIcon.className = 'fab fa-telegram';
             } else {
                 btnText.textContent = 'Order on WhatsApp';
                 btnIcon.className = 'fab fa-whatsapp';
@@ -253,6 +256,18 @@ class Cart {
         const customerPhone = document.getElementById('customer-phone').value.trim();
         const customerNote = document.getElementById('customer-note') ? document.getElementById('customer-note').value.trim() : '';
 
+        const timeChoiceEl = document.getElementById('order-time-choice');
+        const timeChoice = timeChoiceEl ? timeChoiceEl.value : 'asap';
+        let requestedTime = '';
+        if (timeChoice === 'scheduled') {
+            const timeInput = document.getElementById('customer-time');
+            requestedTime = timeInput ? timeInput.value : '';
+            if (!requestedTime) {
+                this.showToast('Please choose a time, or switch back to ASAP');
+                return;
+            }
+        }
+
         if (!customerName || !customerPhone) {
             this.showToast('Please enter your name and phone number');
             return;
@@ -260,16 +275,20 @@ class Cart {
 
         message += `\nName: ${customerName}`;
         message += `\nPhone: ${customerPhone}`;
+        message += `\nRequested time: ${requestedTime ? requestedTime : 'ASAP'}`;
         if (customerNote) {
             message += `\nNotes: ${customerNote}`;
         }
 
-        // Save order to database first
+        // Save order to database first (this also triggers the Telegram
+        // notification server-side, if Telegram is configured in settings)
+        let saved = false;
         try {
             const payload = {
                 customer_name: customerName,
                 customer_phone: customerPhone,
                 notes: customerNote,
+                requested_time: requestedTime,
                 total_usd: totals.usd,
                 items: this.items.map(item => ({
                     id: item.id,
@@ -286,6 +305,7 @@ class Cart {
                 body: JSON.stringify(payload)
             });
             const result = await res.json();
+            saved = !!result.success;
             if (!result.success) {
                 console.error('Order save failed:', result.error);
             }
@@ -293,10 +313,25 @@ class Cart {
             console.error('Order save error:', e);
         }
 
+        const method = window.orderMethod || 'whatsapp';
+
+        if (method === 'telegram') {
+            // Order is already sent to the restaurant's Telegram by save_order.php.
+            // No app hand-off needed; just confirm to the customer.
+            if (saved) {
+                this.clearCart();
+                this.closeCart();
+                this.resetCustomerForm();
+                this.showOrderSuccessModal();
+            } else {
+                this.showToast('Something went wrong sending your order. Please try again.');
+            }
+            return;
+        }
+
         // Get phone number from a global variable set in php, strip non-digits
         const phone = (window.restaurantPhone || '').replace(/\D/g, ''); 
-        const method = window.orderMethod || 'whatsapp';
-        
+
         if (method === 'sms') {
             const url = `sms:+${phone}?body=${encodeURIComponent(message)}`;
             window.location.href = url;
@@ -304,6 +339,53 @@ class Cart {
             const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
             window.open(url, '_blank');
         }
+    }
+
+    clearCart() {
+        this.items = [];
+        this.save();
+        this.updateButtons();
+        this.renderCartButton();
+    }
+
+    resetCustomerForm() {
+        const nameEl = document.getElementById('customer-name');
+        const phoneEl = document.getElementById('customer-phone');
+        const noteEl = document.getElementById('customer-note');
+        const timeChoiceEl = document.getElementById('order-time-choice');
+        const timeEl = document.getElementById('customer-time');
+        const timeWrap = document.getElementById('customer-time-wrap');
+        if (nameEl) nameEl.value = '';
+        if (phoneEl) phoneEl.value = '';
+        if (noteEl) noteEl.value = '';
+        if (timeChoiceEl) timeChoiceEl.value = 'asap';
+        if (timeEl) timeEl.value = '';
+        if (timeWrap) timeWrap.style.display = 'none';
+    }
+
+    showOrderSuccessModal() {
+        let modal = document.getElementById('order-success-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'order-success-modal';
+            modal.className = 'order-success-overlay';
+            modal.innerHTML = `
+                <div class="order-success-box">
+                    <div class="order-success-icon"><i class="fas fa-check-circle"></i></div>
+                    <h3>Order sent successfully!</h3>
+                    <p>We've received your order and will be in touch shortly.</p>
+                    <button type="button" class="order-success-close">OK</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.querySelector('.order-success-close').addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.style.display = 'none';
+            });
+        }
+        modal.style.display = 'flex';
     }
 
     showToast(msg) {

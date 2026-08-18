@@ -33,7 +33,7 @@ include "includes/header.php";
                 echo $unorderedList;
                 ?>
                 <div class="col-3">
-                                    <img src="<?php echo htmlspecialchars(webp_url($row['item_pic'])); ?>" alt="" loading="lazy" style="width: 100%; height: auto; object-fit: cover; border-radius: 8px;">
+                                    <img src="<?php echo htmlspecialchars($row['item_pic']); ?>" alt="" loading="lazy" style="width: 100%; height: auto; object-fit: cover; border-radius: 8px;">
                                 </div>
                                 <?php
             }

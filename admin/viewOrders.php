@@ -11,6 +11,7 @@ $perPage = 20;
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $dateFrom = isset($_GET['date_from']) ? trim($_GET['date_from']) : date('Y-m-d');
 $dateTo = isset($_GET['date_to']) ? trim($_GET['date_to']) : date('Y-m-d', strtotime('+1 month'));
+$statusFilter = isset($_GET['status_filter']) ? trim($_GET['status_filter']) : '';
 
 $where = "";
 $params = [];
@@ -22,6 +23,12 @@ if ($search !== '') {
     $params[] = "%$search%";
     $params[] = "%$search%";
     $types .= "sss";
+}
+
+if ($statusFilter !== '' && in_array($statusFilter, ['pending', 'sent', 'completed', 'cancelled'])) {
+    $where .= " AND status = ?";
+    $params[] = $statusFilter;
+    $types .= "s";
 }
 
 $where .= " AND DATE(created_at) >= ? AND DATE(created_at) <= ?";
@@ -60,9 +67,9 @@ $stmt->close();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $order_id = (int)$_POST['order_id'];
     $new_status = $_POST['new_status'];
-    $allowed = ['pending', 'sent', 'cancelled'];
+    $allowed = ['pending', 'sent', 'completed', 'cancelled'];
     if (in_array($new_status, $allowed)) {
-        if ($new_status === 'sent') {
+        if ($new_status === 'completed') {
             $upd = $conn->prepare("UPDATE orders SET status = ?, completed_at = NOW() WHERE id = ?");
         } else {
             $upd = $conn->prepare("UPDATE orders SET status = ?, completed_at = NULL WHERE id = ?");
@@ -74,6 +81,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
         exit;
     }
 }
+
+// Display labels for status values (DB keeps 'sent' for backward compatibility,
+// but it's shown to you as "Done")
+$statusLabels = [
+    'pending'   => 'Pending',
+    'sent'      => 'Ready for Pickup',
+    'completed' => 'Completed',
+    'cancelled' => 'Cancelled',
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -81,9 +97,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Orders</title>
-    <link rel="stylesheet" href="../assets/css/view.css?v=1.1" />
+    <link rel="stylesheet" href="../assets/css/view.css?v=1.2" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <link rel="stylesheet" href="../assets/css/admin-shared.css?v=1.1">
+    <link rel="stylesheet" href="../assets/css/admin-shared.css?v=1.2">
 </head>
 <body>
     <div class="dashboard-container">
@@ -101,6 +117,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
                 <div class="search-box" style="flex:1; min-width:180px;">
                     <input type="text" name="search" placeholder="Search by name or phone..." value="<?php echo htmlspecialchars($search); ?>">
                 </div>
+                <label style="font-size:13px; color:#42522B; font-weight:600;">Status:
+                    <select name="status_filter" style="margin-left:4px; padding:8px; border:1px solid #CBB58B; border-radius:5px; font-size:13px;">
+                        <option value="">All</option>
+                        <option value="pending" <?php echo $statusFilter === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                        <option value="sent" <?php echo $statusFilter === 'sent' ? 'selected' : ''; ?>>Ready for Pickup</option>
+                        <option value="completed" <?php echo $statusFilter === 'completed' ? 'selected' : ''; ?>>Completed</option>
+                        <option value="cancelled" <?php echo $statusFilter === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                    </select>
+                </label>
                 <label style="font-size:13px; color:#42522B; font-weight:600;">From:
                     <input type="date" name="date_from" value="<?php echo $dateFrom; ?>" style="margin-left:4px; padding:8px; border:1px solid #CBB58B; border-radius:5px; font-size:13px;">
                 </label>
@@ -112,46 +137,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
         </div>
 
         <?php if (count($rows) > 0): ?>
-            <div class="item-list">
-                <div class="order-row order-header">
-                    <span>ID</span>
-                    <span>Customer</span>
-                    <span>Phone</span>
-                    <span>Notes</span>
-                    <span>Total</span>
-                    <span>Status</span>
-                    <span>Ordered</span>
-                    <span>Completed</span>
-                    <span>Action</span>
-                </div>
-
+            <div class="orders-list">
                 <?php foreach ($rows as $r):
                     $total = $r['total_usd'] > 0 ? '$' . number_format($r['total_usd'], 2) : '-';
+                    $itemsList = [];
+                    if (!empty($r['items'])) {
+                        $decoded = json_decode($r['items'], true);
+                        if (is_array($decoded)) {
+                            foreach ($decoded as $it) {
+                                $qty = isset($it['quantity']) ? (int)$it['quantity'] : 1;
+                                $itemsList[] = $qty . 'x ' . ($it['name'] ?? 'Item');
+                            }
+                        }
+                    }
                 ?>
-                    <div class="order-row">
-                        <span><?php echo (int)$r['id']; ?></span>
-                        <span><?php echo htmlspecialchars($r['customer_name'] ?? ''); ?></span>
-                        <span><?php echo htmlspecialchars($r['whatsapp_number'] ?? ''); ?></span>
-                        <span style="font-size: 13px; text-align: left; max-height: 60px; overflow-y: auto; word-break: break-word; padding: 0 4px;"><?php echo !empty($r['notes']) ? htmlspecialchars($r['notes']) : '-'; ?></span>
-                        <span><?php echo $total; ?></span>
-                        <span>
+                    <div class="order-card">
+                        <div class="order-card-top">
+                            <span class="order-id">#<?php echo (int)$r['id']; ?></span>
                             <span class="status-badge status-<?php echo htmlspecialchars($r['status'] ?? 'pending'); ?>">
-                                <?php echo htmlspecialchars($r['status'] ?? 'pending'); ?>
+                                <?php echo htmlspecialchars($statusLabels[$r['status']] ?? ($r['status'] ?? 'pending')); ?>
                             </span>
-                        </span>
-                        <span><?php echo $r['created_at'] ? date('M j, g:ia', strtotime($r['created_at'])) : '-'; ?></span>
-                        <span><?php echo $r['completed_at'] ? date('M j, g:ia', strtotime($r['completed_at'])) : '-'; ?></span>
-                        <span>
-                            <form method="POST" class="status-form">
-                                <input type="hidden" name="order_id" value="<?php echo (int)$r['id']; ?>">
-                                <select name="new_status" class="status-select">
-                                    <option value="pending" <?php echo $r['status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                    <option value="sent" <?php echo $r['status'] === 'sent' ? 'selected' : ''; ?>>Sent</option>
-                                    <option value="cancelled" <?php echo $r['status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
-                                </select>
-                                <button type="submit" name="update_status" class="update-btn"><i class="fas fa-check"></i></button>
-                            </form>
-                        </span>
+                        </div>
+
+                        <div class="order-card-body">
+                            <div class="order-field">
+                                <span class="order-field-label"><i class="fas fa-user"></i> Customer</span>
+                                <span class="order-field-value"><?php echo htmlspecialchars($r['customer_name'] ?? ''); ?></span>
+                            </div>
+                            <div class="order-field">
+                                <span class="order-field-label"><i class="fas fa-phone"></i> Phone</span>
+                                <span class="order-field-value"><?php echo htmlspecialchars($r['whatsapp_number'] ?? ''); ?></span>
+                            </div>
+                            <div class="order-field">
+                                <span class="order-field-label"><i class="fas fa-clock"></i> Requested Time</span>
+                                <span class="order-field-value"><?php echo !empty($r['requested_time']) ? htmlspecialchars($r['requested_time']) : 'ASAP'; ?></span>
+                            </div>
+                            <div class="order-field">
+                                <span class="order-field-label"><i class="fas fa-bag-shopping"></i> Items</span>
+                                <span class="order-field-value"><?php echo !empty($itemsList) ? htmlspecialchars(implode(', ', $itemsList)) : '-'; ?></span>
+                            </div>
+                            <?php if (!empty($r['notes'])): ?>
+                            <div class="order-field">
+                                <span class="order-field-label"><i class="fas fa-note-sticky"></i> Notes</span>
+                                <span class="order-field-value"><?php echo htmlspecialchars($r['notes']); ?></span>
+                            </div>
+                            <?php endif; ?>
+                            <div class="order-field">
+                                <span class="order-field-label"><i class="fas fa-dollar-sign"></i> Total</span>
+                                <span class="order-field-value order-total"><?php echo $total; ?></span>
+                            </div>
+                            <div class="order-field">
+                                <span class="order-field-label"><i class="fas fa-calendar-plus"></i> Ordered</span>
+                                <span class="order-field-value"><?php echo $r['created_at'] ? date('M j, g:ia', strtotime($r['created_at'])) : '-'; ?></span>
+                            </div>
+                            <?php if (!empty($r['completed_at'])): ?>
+                            <div class="order-field">
+                                <span class="order-field-label"><i class="fas fa-calendar-check"></i> Completed</span>
+                                <span class="order-field-value"><?php echo date('M j, g:ia', strtotime($r['completed_at'])); ?></span>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <form method="POST" class="status-form">
+                            <input type="hidden" name="order_id" value="<?php echo (int)$r['id']; ?>">
+                            <select name="new_status" class="status-select">
+                                <option value="pending" <?php echo $r['status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                <option value="sent" <?php echo $r['status'] === 'sent' ? 'selected' : ''; ?>>Ready for Pickup</option>
+                                <option value="completed" <?php echo $r['status'] === 'completed' ? 'selected' : ''; ?>>Completed</option>
+                                <option value="cancelled" <?php echo $r['status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                            </select>
+                            <button type="submit" name="update_status" class="update-btn"><i class="fas fa-check"></i> Update</button>
+                        </form>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -160,6 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
                 <?php
                 $qp = [];
                 if ($search !== '') $qp['search'] = $search;
+                if ($statusFilter !== '') $qp['status_filter'] = $statusFilter;
                 $qp['date_from'] = $dateFrom;
                 $qp['date_to'] = $dateTo;
                 if ($page > 1):

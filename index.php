@@ -13,17 +13,15 @@ $mapLink = $settings['restaurant_maps'] ?? '#';
 
 <?php include 'includes/header.php' ?>
 
-<!-- Swiper CSS (non-blocking, only needed for gallery below fold) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"></noscript>
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 <!-- External CSS for Index -->
 <link rel="stylesheet" href="assets/css/index.css">
 <link rel="stylesheet" href="assets/css/about.css">
 
 <!-- Hero Section -->
 <section class="hero-section">
-    <?php $homeBg = webp_url($settings['home_bg'] ?? 'assets/images/admin/bgs/hero-bg.jpg'); ?>
-    <img src="<?php echo htmlspecialchars($homeBg); ?>" alt="" class="hero-bg-img" fetchpriority="high">
+    <div class="hero-bg" style="background-image: url('<?php echo htmlspecialchars($settings['home_bg'] ?? 'assets/images/admin/bgs/hero-bg.jpg'); ?>');"></div>
     <div class="hero-overlay"></div>
     <div class="hero-content">
         <h1 class="hero-title">Welcome to <span><?php echo htmlspecialchars($settings['restaurant_name'] ?? 'Our Kitchen'); ?></span></h1>
@@ -91,7 +89,7 @@ if ($hasPhotos):
                 <?php
                 while ($gRow = $galleryRes->fetch_assoc()) {
                     echo '<div class="swiper-slide gallery-slide">';
-                    echo '    <img src="' . htmlspecialchars(webp_url($gRow['photo_path'])) . '" alt="Restaurant Vibe" loading="lazy" width="600" height="450">';
+                    echo '    <img src="' . htmlspecialchars($gRow['photo_path']) . '" alt="Restaurant Vibe" loading="lazy" width="600" height="450">';
                     echo '</div>';
                 }
                 ?>
@@ -176,13 +174,13 @@ if ($hasPhotos):
     
 </section>
 
-<!-- Swiper JS (deferred) -->
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
+<!-- Swiper JS -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
 
 
 <!-- External JS for Index -->
-<script src="assets/js/index.js" defer></script>
+<script src="assets/js/index.js"></script>
 
 <?php include 'includes/footer.php' ?>
 

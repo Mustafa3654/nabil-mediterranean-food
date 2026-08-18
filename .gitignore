@@ -1,0 +1,16 @@
+# Local config / secrets
+includes/connection.local.php
+*.local.php
+.env
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+*.swp
+
+# Logs & temp
+*.log
+error_log
+/tmp/

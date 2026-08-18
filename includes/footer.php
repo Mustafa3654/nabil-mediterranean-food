@@ -1,7 +1,7 @@
 </main>
 
     <!-- External CSS for Footer -->
-    <link rel="stylesheet" href="<?php echo $BASE_URL; ?>assets/css/footer.css?v=20260608">
+    <link rel="stylesheet" href="<?php echo $BASE_URL; ?>assets/css/footer.css?v=<?php echo time(); ?>">
 
     <footer class="site-footer">
         <div class="footer-inner">
@@ -31,16 +31,14 @@
             </div>
 
             <div class="footer-bottom">
-                <p class="copyright">&copy; <?php echo date('Y'); ?> Mustafa Abou El-Hajj. All rights reserved.</p>
+                <p class="copyright">&copy; <?php echo date('Y'); ?><a href="https://www.instagram.com/mostafa.36510/" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;"> Mustafa Abou El-Hajj</a>. All rights reserved.</p>
             </div>
         </div>
         
 
     </footer>
 
-    <!-- Bootstrap JS (deferred) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-    <!-- Theme JS (deferred) -->
-    <script src="<?php echo $BASE_URL; ?>assets/js/theme.js" defer></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

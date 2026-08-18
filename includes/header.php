@@ -6,9 +6,13 @@ $isAdmin = $_SESSION["isAdmin"] ?? false;
 // Fetch restaurant settings (cached)
 $settings = get_settings();
 
-$restaurantName = $settings['restaurant_name'] ?? 'Restaurant Menu';
+$restaurantName = trim($settings['restaurant_name'] ?? 'Nabil Mediterranean Food');
+if (preg_match('/^nabilmediterraneanfood(?:\.com)?$/i', str_replace(' ', '', $restaurantName))) {
+    $restaurantName = 'Nabil Mediterranean Food';
+}
 $restaurantLogo = $settings['restaurant_logo'] ?? '';
 $restaurantPhone = $settings['restaurant_phone'] ?? 'xxxxxxxx';
+$siteUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . htmlspecialchars($_SERVER['HTTP_HOST'] ?? '') . $BASE_URL;
 
 // Olive Green Theme Colors
 $primaryColor = '#42522B';
@@ -23,57 +27,67 @@ $accentRgb    = '203, 181, 139'; // Gold Glow
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="<?php echo htmlspecialchars($settings['restaurant_description'] ?? 'Discover our authentic Mediterranean menu.'); ?>">
-    <meta name="keywords" content="restaurant, menu, mediterranean, lebanese, food, <?php echo htmlspecialchars($restaurantName); ?>">
+    <meta name="keywords" content="Nabil Mediterranean Food, Mediterranean restaurant Warrensville Heights, Lebanese food Ohio, halal restaurant Cleveland, hummus, falafel, shawarma, kibbeh, gyros, Mediterranean market, takeout, catering, <?php echo htmlspecialchars($restaurantName); ?>">
+
+    <!-- Dynamic Canonical URL -->
+    <link rel="canonical" href="https://www.nabilmediterraneanfood.com<?php echo strtok($_SERVER['REQUEST_URI'], '?'); ?>">
+
+    <!-- Clean Direct Favicon PNG for Search Engines -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/favicon.png">
+
+    <!-- Open Graph Tags -->
     <meta property="og:title" content="<?php echo htmlspecialchars($restaurantName); ?>">
     <meta property="og:description" content="<?php echo htmlspecialchars($settings['restaurant_description'] ?? 'Discover our authentic Mediterranean menu.'); ?>">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . htmlspecialchars($_SERVER['HTTP_HOST'] ?? '') . htmlspecialchars($_SERVER['REQUEST_URI'] ?? '/'); ?>">
+    <meta property="og:site_name" content="<?php echo htmlspecialchars($restaurantName); ?>">
+    <meta property="og:url" content="<?php echo $siteUrl; ?>">
     <?php if (!empty($restaurantLogo)): ?>
-    <meta property="og:image" content="<?php echo $BASE_URL . htmlspecialchars(webp_url($restaurantLogo)); ?>">
+    <meta property="og:image" content="<?php echo $BASE_URL . htmlspecialchars($restaurantLogo); ?>">
     <?php endif; ?>
+    
+    <!-- Dynamic Title -->
     <title><?php echo htmlspecialchars($restaurantName); ?></title>
-
-    <!-- Preconnect to external origins -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <!-- Google Fonts (async) – includes Poppins, Inter, and Dancing Script -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Dancing+Script:wght@700&display=swap" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Dancing+Script:wght@700&display=swap"></noscript>
-
-    <!-- Bootstrap CSS (non-blocking) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"></noscript>
-
-    <!-- Font Awesome (non-blocking) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
-
+    
+    <!-- Google Search Site Name & Logo Schema -->
+    <script type="application/ld+json">
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "<?php echo htmlspecialchars($restaurantName); ?>",
+        "alternateName": "Nabil Food",
+        "url": "<?php echo $siteUrl; ?>"
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "Restaurant",
+        "name": "<?php echo htmlspecialchars($restaurantName); ?>",
+        "url": "<?php echo $siteUrl; ?>",
+        "logo": "<?php echo $siteUrl; ?>favicon.png",
+        "image": "<?php echo $siteUrl; ?>favicon.png"
+      }
+    ]
+    </script>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <!-- Global Header CSS -->
     <link rel="stylesheet" href="<?php echo $BASE_URL; ?>assets/css/header.css">
 
     <!-- Theme Style -->
     <link rel="stylesheet" href="<?php echo $BASE_URL; ?>assets/css/theme.css">
-
-    <?php
-    // Preload the hero background for the current page (LCP optimization)
-    $currentPage = basename($_SERVER['SCRIPT_NAME'], '.php');
-    $heroImage = '';
-    switch ($currentPage) {
-        case 'index':  $heroImage = $settings['home_bg']    ?? 'assets/images/admin/bgs/hero-bg.jpg'; break;
-        case 'menu':   $heroImage = $settings['menu_bg']    ?? 'assets/images/admin/bgs/menu-bg.jpg'; break;
-        case 'contact':$heroImage = $settings['contact_bg'] ?? 'assets/images/admin/bgs/contact-bg.jpg'; break;
-        case 'about':  $heroImage = $settings['about_bg']   ?? 'assets/images/admin/bgs/about-bg.jpg'; break;
-        default:       $heroImage = $settings['home_bg']    ?? 'assets/images/admin/bgs/hero-bg.jpg'; break;
-    }
-    if (!empty($heroImage)) {
-        echo '<link rel="preload" as="image" href="' . htmlspecialchars(webp_url($heroImage)) . '">';
-    }
-    ?>
-    <!-- Prevent dark mode FOUC -->
-    <script>if(localStorage.getItem('theme')==='dark')document.body.classList.add('dark-mode');</script>
+    
+    <!-- Preload Hero Background Image (LCP Optimization) -->
+    <link rel="preload" as="image" href="<?php echo htmlspecialchars($settings['menu_bg'] ?? 'assets/images/admin/bgs/menu-bg.jpg'); ?>">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg">
@@ -83,7 +97,7 @@ $accentRgb    = '203, 181, 139'; // Gold Glow
 
             <!-- Centered Brand: Logo Only -->
             <a class="navbar-brand centered-brand d-flex flex-column align-items-center" href="<?php echo $BASE_URL; ?>index">
-                <img src="<?php echo $BASE_URL . htmlspecialchars(webp_url($restaurantLogo)); ?>" alt="Logo">
+                <img src="<?php echo $BASE_URL . htmlspecialchars($restaurantLogo); ?>" alt="Logo">
             </a>
 
             <!-- Right Controls: Theme Toggle & Burger -->
@@ -114,6 +128,7 @@ $accentRgb    = '203, 181, 139'; // Gold Glow
             </div>
         </div>
     </nav>
+        
+        <!-- External Theme JS -->
+        <script src="<?php echo $BASE_URL; ?>assets/js/theme.js"></script>
     <main>
-
-

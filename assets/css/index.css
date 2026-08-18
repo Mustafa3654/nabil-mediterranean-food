@@ -47,19 +47,6 @@
   z-index: 1;
 }
 
-.hero-bg-img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  filter: blur(5px);
-  transform: scale(1.1);
-  z-index: 1;
-}
-
 .hero-overlay {
   position: absolute;
   top: 0;
@@ -291,6 +278,7 @@
 /* ==========================================================================
    Custom Banners Styling (Olive Green & Cream)
    ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
 
 /* Green Banner */
 .green-banner-section {
