@@ -1,10 +1,51 @@
-<?php
+﻿<?php
 include "../includes/connection.php";
 include "../includes/auth.php";
 start_secure_session();
 require_admin('../login');
 check_session_timeout(30);
 $csrfToken = ensure_csrf_token();
+/* -------------------------
+   Telegram helper function
+-------------------------- */
+if (!function_exists('sendTelegramMessage')) {
+    function sendTelegramMessage($chat_id, $bot_token, $text)
+    {
+        $url = "https://api.telegram.org/bot{$bot_token}/sendMessage";
+
+        $data = [
+            'chat_id'    => $chat_id,
+            'text'       => $text,
+            'parse_mode' => 'HTML'
+        ];
+
+        $options = [
+            'http' => [
+                'method'  => 'POST',
+                'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+                'content' => http_build_query($data),
+                'timeout' => 10
+            ]
+        ];
+
+        $context = stream_context_create($options);
+        $result = @file_get_contents($url, false, $context);
+
+        if ($result === false) {
+            error_log("Telegram API Error: request failed");
+            return false;
+        }
+
+        $response = json_decode($result, true);
+        if (!isset($response['ok']) || !$response['ok']) {
+            error_log("Telegram API Error: " . ($response['description'] ?? 'Unknown error'));
+            return false;
+        }
+
+        return true;
+    }
+}
+
 
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $perPage = 20;
@@ -63,6 +104,70 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
+
+$stmt = null;
+
+// Handle resend to Telegram
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resend_telegram'])) {
+    $order_id = (int)$_POST['order_id'];
+    if (verify_csrf_token($_POST['csrf_token'] ?? null)) {
+        $orderStmt = $conn->prepare("SELECT id, customer_name, whatsapp_number, total_usd, notes, requested_time, items, created_at FROM orders WHERE id = ?");
+        $orderStmt->bind_param("i", $order_id);
+        $orderStmt->execute();
+        $orderRes = $orderStmt->get_result();
+        if ($order = $orderRes->fetch_assoc()) {
+            $settings = get_settings();
+            $telegram_chat_id = $settings['chat_id'] ?? '';
+            $telegram_bot_token = $settings['bot_token'] ?? '';
+            if ($telegram_chat_id && $telegram_bot_token) {
+                $lines_msg = [];
+                $lines_msg[] = "🔔 <b>New Order #" . $order['id'] . "</b>";
+                $lines_msg[] = "<b>Name:</b> " . htmlspecialchars($order['customer_name']);
+                $lines_msg[] = "<b>Phone:</b> " . htmlspecialchars($order['whatsapp_number']);
+                $lines_msg[] = "<b>Requested time:</b> " . (!empty($order['requested_time']) ? htmlspecialchars($order['requested_time']) : 'ASAP');
+                if (!empty($order['items'])) {
+                    $decoded = json_decode($order['items'], true);
+                    if (is_array($decoded)) {
+                        $lines_msg[] = "";
+                        $lines_msg[] = "<b>Items:</b>";
+                        foreach ($decoded as $item) {
+                            $qty = isset($item['quantity']) ? (int)$item['quantity'] : 1;
+                            $iname = htmlspecialchars($item['name'] ?? 'Item');
+                            $lines_msg[] = "• " . $qty . " x " . $iname;
+                        }
+                    }
+                }
+                if ($order['total_usd'] > 0) {
+                    $lines_msg[] = "";
+                    $lines_msg[] = "<b>Total:</b> $" . number_format((float)$order['total_usd'], 2);
+                }
+                if (!empty($order['notes'])) {
+                    $lines_msg[] = "";
+                    $lines_msg[] = "<b>Notes:</b> " . htmlspecialchars($order['notes']);
+                }
+                $telegram_text = implode("\n", $lines_msg);
+                if (sendTelegramMessage($telegram_chat_id, $telegram_bot_token, $telegram_text)) {
+                    header("Location: viewOrders?resended=1");
+                    exit;
+                } else {
+                    header("Location: viewOrders?resend_failed=1");
+                    exit;
+                }
+            } else {
+                header("Location: viewOrders?resend_failed_noconfig=1");
+                exit;
+            }
+        } else {
+            header("Location: viewOrders?notfound=1");
+            exit;
+        }
+        $orderStmt->close();
+    } else {
+        header("Location: viewOrders?csrf_failed=1");
+        exit;
+    }
+}
+
 // Handle status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $order_id = (int)$_POST['order_id'];
@@ -110,6 +215,21 @@ $statusLabels = [
 
         <?php if (isset($_GET['updated'])): ?>
             <div class="alert alert-success">Order status updated.</div>
+        <?php if (isset($_GET['resended'])): ?>
+            <div class="alert alert-success">Order resent to Telegram.</div>
+        <?php endif; ?>
+        <?php if (isset($_GET['resend_failed'])): ?>
+            <div class="alert alert-danger">Failed to resend order to Telegram.</div>
+        <?php endif; ?>
+        <?php if (isset($_GET['resend_failed_noconfig'])): ?>
+            <div class="alert alert-danger">Telegram not configured in settings.</div>
+        <?php endif; ?>
+        <?php if (isset($_GET['notfound'])): ?>
+            <div class="alert alert-danger">Order not found.</div>
+        <?php endif; ?>
+        <?php if (isset($_GET['csrf_failed'])): ?>
+            <div class="alert alert-danger">Invalid request token.</div>
+        <?php endif; ?>
         <?php endif; ?>
 
         <div class="controls">
@@ -200,6 +320,7 @@ $statusLabels = [
 
                         <form method="POST" class="status-form">
                             <input type="hidden" name="order_id" value="<?php echo (int)$r['id']; ?>">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
                             <select name="new_status" class="status-select">
                                 <option value="pending" <?php echo $r['status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
                                 <option value="sent" <?php echo $r['status'] === 'sent' ? 'selected' : ''; ?>>Ready for Pickup</option>
@@ -207,6 +328,7 @@ $statusLabels = [
                                 <option value="cancelled" <?php echo $r['status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
                             </select>
                             <button type="submit" name="update_status" class="update-btn"><i class="fas fa-check"></i> Update</button>
+                            <button type="submit" name="resend_telegram" class="update-btn" style="background:#8B7355; margin-left:8px;"><i class="fas fa-paper-plane"></i> Resend</button>
                         </form>
                     </div>
                 <?php endforeach; ?>

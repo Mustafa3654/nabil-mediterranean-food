@@ -1,5 +1,5 @@
 # Local config / secrets
-includes/connection.local.php
+includes/connection.php
 *.local.php
 .env
 
