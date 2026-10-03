@@ -256,7 +256,10 @@ if (isset($_POST['update_settings'])) {
                 value4_title = ?,
                 value4_desc = ?
                 WHERE id = ?");
-            $stmt->bind_param(str_repeat("s", 58) . "i",
+            if (!$stmt) {
+                $message = "<div class='alert alert-danger'>Could not prepare settings update: " . htmlspecialchars($conn->error) . "</div>";
+            } else {
+            $stmt->bind_param(str_repeat("s", 59) . "i",
                 $name, $logo_path, $home_bg_path, $menu_bg_path, $contact_bg_path, 
                 $phone, $email, $address, $maps, $desc, $hours, $whatsapp, $insta, $fb, 
                 $opening_title, $country_code, $order_method, $show_cart, $notify_contact_telegram,
@@ -277,9 +280,13 @@ if (isset($_POST['update_settings'])) {
                 $value4_icon, $value4_title, $value4_desc,
                 $settings['id']
             );
+            }
         } else {
             $stmt = $conn->prepare("INSERT INTO settings (restaurant_name, restaurant_logo, home_bg, menu_bg, contact_bg, restaurant_phone, restaurant_email, restaurant_address, restaurant_maps, restaurant_description, opening_hours, whatsapp_number, instagram_url, facebook_url, opening_title, country_code, order_method, show_cart, banner1_t1, banner1_t2, banner1_t3, banner2_t1, banner2_t2, banner2_t3, banner2_t4, about_title, about_subtitle, about_desc1, about_desc2, about_image, about_chef_image, about_chef_title, about_chef_subtitle, about_chef_name, about_chef_bio1, about_chef_bio2, about_years, about_years_label, about_bg, chat_id, bot_token, values_title, values_subtitle, values_desc, value1_icon, value1_title, value1_desc, value2_icon, value2_title, value2_desc, value3_icon, value3_title, value3_desc, value4_icon, value4_title, value4_desc) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            if (!$stmt) {
+                $message = "<div class='alert alert-danger'>Could not prepare settings insert: " . htmlspecialchars($conn->error) . "</div>";
+            } else {
             $stmt->bind_param(str_repeat("s", 56), 
                 $name, $logo_path, $home_bg_path, $menu_bg_path, $contact_bg_path, 
                 $phone, $email, $address, $maps, $desc, $hours, $whatsapp, $insta, $fb, 
@@ -300,18 +307,21 @@ if (isset($_POST['update_settings'])) {
                 $value3_icon, $value3_title, $value3_desc,
                 $value4_icon, $value4_title, $value4_desc
             );
+            }
         }
 
-        if ($stmt->execute()) {
+        if (isset($stmt) && $stmt && $stmt->execute()) {
             invalidate_settings_cache();
 
             $message = "<div class='alert alert-success'>Settings updated successfully!</div>";
             // Refresh settings cache
             $settings = get_settings();
-        } else {
+        } elseif (isset($stmt) && $stmt) {
             $message = "<div class='alert alert-danger'>Error updating settings: " . htmlspecialchars($stmt->error) . "</div>";
         }
-        $stmt->close();
+        if (isset($stmt) && $stmt) {
+            $stmt->close();
+        }
     }
 }
 
