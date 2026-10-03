@@ -19,30 +19,36 @@ if (!function_exists('sendTelegramMessage')) {
             'parse_mode' => 'HTML'
         ];
 
-        $options = [
-            'http' => [
-                'method'  => 'POST',
-                'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
-                'content' => http_build_query($data),
-                'timeout' => 10
-            ]
-        ];
+        if (!function_exists('curl_init')) {
+            return ['ok' => false, 'description' => 'The server cURL extension is unavailable.'];
+        }
 
-        $context = stream_context_create($options);
-        $result = @file_get_contents($url, false, $context);
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query($data),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_TIMEOUT => 10,
+        ]);
+        $result = curl_exec($ch);
+        $curlError = curl_error($ch);
+        curl_close($ch);
 
         if ($result === false) {
-            error_log("Telegram API Error: request failed");
-            return false;
+            error_log("Telegram API Error: " . $curlError);
+            return ['ok' => false, 'description' => 'Could not connect to Telegram: ' . ($curlError ?: 'unknown cURL error')];
         }
 
         $response = json_decode($result, true);
         if (!isset($response['ok']) || !$response['ok']) {
-            error_log("Telegram API Error: " . ($response['description'] ?? 'Unknown error'));
-            return false;
+            $description = $response['description'] ?? 'Telegram rejected the message.';
+            error_log("Telegram API Error: " . $description);
+            return ['ok' => false, 'description' => $description];
         }
 
-        return true;
+        return ['ok' => true, 'description' => ''];
     }
 }
 
@@ -116,7 +122,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resend_telegram'])) {
         $orderStmt->execute();
         $orderRes = $orderStmt->get_result();
         if ($order = $orderRes->fetch_assoc()) {
-            $settings = get_settings();
+            // Read current Telegram credentials instead of using the cached
+            // settings snapshot, which may contain an old token or chat ID.
+            $settingsResult = $conn->query("SELECT chat_id, bot_token FROM settings LIMIT 1");
+            $settings = $settingsResult ? $settingsResult->fetch_assoc() : null;
             $telegram_chat_id = $settings['chat_id'] ?? '';
             $telegram_bot_token = $settings['bot_token'] ?? '';
             if ($telegram_chat_id && $telegram_bot_token) {
@@ -146,11 +155,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resend_telegram'])) {
                     $lines_msg[] = "<b>Notes:</b> " . htmlspecialchars($order['notes']);
                 }
                 $telegram_text = implode("\n", $lines_msg);
-                if (sendTelegramMessage($telegram_chat_id, $telegram_bot_token, $telegram_text)) {
+                $telegramResult = sendTelegramMessage($telegram_chat_id, $telegram_bot_token, $telegram_text);
+                if ($telegramResult['ok']) {
                     header("Location: viewOrders?resended=1");
                     exit;
                 } else {
-                    header("Location: viewOrders?resend_failed=1");
+                    header("Location: viewOrders?resend_failed=1&reason=" . urlencode($telegramResult['description']));
                     exit;
                 }
             } else {
@@ -219,7 +229,7 @@ $statusLabels = [
             <div class="alert alert-success">Order resent to Telegram.</div>
         <?php endif; ?>
         <?php if (isset($_GET['resend_failed'])): ?>
-            <div class="alert alert-danger">Failed to resend order to Telegram.</div>
+            <div class="alert alert-danger">Failed to resend order to Telegram. <?php echo htmlspecialchars($_GET['reason'] ?? 'Please check the Telegram configuration and try again.'); ?></div>
         <?php endif; ?>
         <?php if (isset($_GET['resend_failed_noconfig'])): ?>
             <div class="alert alert-danger">Telegram not configured in settings.</div>
@@ -318,7 +328,8 @@ $statusLabels = [
                             <?php endif; ?>
                         </div>
 
-                        <form method="POST" class="status-form">
+                        <div class="status-form">
+                        <form method="POST" style="display: contents;">
                             <input type="hidden" name="order_id" value="<?php echo (int)$r['id']; ?>">
                             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
                             <select name="new_status" class="status-select">
@@ -328,8 +339,13 @@ $statusLabels = [
                                 <option value="cancelled" <?php echo $r['status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
                             </select>
                             <button type="submit" name="update_status" class="update-btn"><i class="fas fa-check"></i> Update</button>
+                        </form>
+                        <form method="POST" style="display: contents;">
+                            <input type="hidden" name="order_id" value="<?php echo (int)$r['id']; ?>">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
                             <button type="submit" name="resend_telegram" class="update-btn" style="background:#8B7355; margin-left:8px;"><i class="fas fa-paper-plane"></i> Resend</button>
                         </form>
+                        </div>
                     </div>
                 <?php endforeach; ?>
             </div>
