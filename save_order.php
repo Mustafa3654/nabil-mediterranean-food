@@ -92,7 +92,7 @@ if ($stmt->execute()) {
     $order_id = $stmt->insert_id;
     echo json_encode(['success' => true, 'order_id' => $order_id]);
 
-    // Notify via Telegram (if configured), after responding to the client.
+    // Notify the configured Telegram chat after saving the order.
     $settings = get_settings();
     $telegram_chat_id = $settings['chat_id'] ?? '';
     $telegram_bot_token = $settings['bot_token'] ?? '';
@@ -114,7 +114,7 @@ if ($stmt->execute()) {
             }
         }
 
-        if ($total_usd > 0) {
+        if ($total_usd >= 0) {
             $lines[] = "";
             $lines[] = "<b>Total:</b> $" . number_format($total_usd, 2);
         }
@@ -123,7 +123,6 @@ if ($stmt->execute()) {
             $lines[] = "";
             $lines[] = "<b>Notes:</b> " . htmlspecialchars($notes);
         }
-
         $telegram_text = implode("\n", $lines);
         sendTelegramMessage($telegram_chat_id, $telegram_bot_token, $telegram_text);
     }

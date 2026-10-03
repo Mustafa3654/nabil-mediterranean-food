@@ -176,14 +176,6 @@ if (isset($_POST['update_settings'])) {
         $chat_id = trim($_POST['chat_id'] ?? '');
         $bot_token = trim($_POST['bot_token'] ?? '');
 
-        // AI fields
-        $deepseek_api_key = trim($_POST['deepseek_api_key'] ?? '');
-        $deepseek_model = trim($_POST['deepseek_model'] ?? 'deepseek-v4-flash');
-        $allowedModels = ['deepseek-v4-pro', 'deepseek-v4-flash', 'deepseek-reasoner', 'deepseek-chat'];
-        if (!in_array($deepseek_model, $allowedModels)) {
-            $deepseek_model = 'deepseek-v4-flash';
-        }
-
         // Image fields
         $logo_path = $settings['restaurant_logo'] ?? '';
         $home_bg_path = $settings['home_bg'] ?? '';
@@ -248,8 +240,6 @@ if (isset($_POST['update_settings'])) {
                 about_bg = ?,
                 chat_id = ?,
                 bot_token = ?,
-                deepseek_api_key = ?,
-                deepseek_model = ?,
                 values_title = ?,
                 values_subtitle = ?,
                 values_desc = ?,
@@ -266,7 +256,7 @@ if (isset($_POST['update_settings'])) {
                 value4_title = ?,
                 value4_desc = ?
                 WHERE id = ?");
-            $stmt->bind_param(str_repeat("s", 61) . "i", 
+            $stmt->bind_param(str_repeat("s", 58) . "i",
                 $name, $logo_path, $home_bg_path, $menu_bg_path, $contact_bg_path, 
                 $phone, $email, $address, $maps, $desc, $hours, $whatsapp, $insta, $fb, 
                 $opening_title, $country_code, $order_method, $show_cart, $notify_contact_telegram,
@@ -279,7 +269,7 @@ if (isset($_POST['update_settings'])) {
                 $about_chef_bio1, $about_chef_bio2,
                 $about_years, $about_years_label,
                 $about_bg_path,
-                $chat_id, $bot_token, $deepseek_api_key, $deepseek_model,
+                $chat_id, $bot_token,
                 $values_title, $values_subtitle, $values_desc,
                 $value1_icon, $value1_title, $value1_desc,
                 $value2_icon, $value2_title, $value2_desc,
@@ -289,7 +279,7 @@ if (isset($_POST['update_settings'])) {
             );
         } else {
             $stmt = $conn->prepare("INSERT INTO settings (restaurant_name, restaurant_logo, home_bg, menu_bg, contact_bg, restaurant_phone, restaurant_email, restaurant_address, restaurant_maps, restaurant_description, opening_hours, whatsapp_number, instagram_url, facebook_url, opening_title, country_code, order_method, show_cart, banner1_t1, banner1_t2, banner1_t3, banner2_t1, banner2_t2, banner2_t3, banner2_t4, about_title, about_subtitle, about_desc1, about_desc2, about_image, about_chef_image, about_chef_title, about_chef_subtitle, about_chef_name, about_chef_bio1, about_chef_bio2, about_years, about_years_label, about_bg, chat_id, bot_token, values_title, values_subtitle, values_desc, value1_icon, value1_title, value1_desc, value2_icon, value2_title, value2_desc, value3_icon, value3_title, value3_desc, value4_icon, value4_title, value4_desc) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param(str_repeat("s", 56), 
                 $name, $logo_path, $home_bg_path, $menu_bg_path, $contact_bg_path, 
                 $phone, $email, $address, $maps, $desc, $hours, $whatsapp, $insta, $fb, 
@@ -354,7 +344,6 @@ $csrfToken = ensure_csrf_token();
             <button type="button" class="tab-btn" onclick="openTab('tab-banners', this)">Banners</button>
             <button type="button" class="tab-btn" onclick="openTab('tab-about', this)">About Us</button>
             <button type="button" class="tab-btn" onclick="openTab('tab-telegram', this)">Telegram</button>
-            <button type="button" class="tab-btn" onclick="openTab('tab-ai', this)">AI</button>
             <button type="button" class="tab-btn" id="gallery-tab-btn" onclick="openTab('tab-gallery', this)">Gallery</button>
         </div>
 
@@ -750,54 +739,6 @@ $csrfToken = ensure_csrf_token();
                 <div class="form-group">
                     <label for="bot_token">Telegram Bot Token</label>
                     <input type="text" name="bot_token" value="<?php echo htmlspecialchars($settings['bot_token'] ?? ''); ?>" placeholder="e.g. 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11">
-                </div>
-            </div>
-
-            <div id="tab-ai" class="tab-content">
-                <h3 style="margin-bottom: 15px; border-bottom: 2px solid var(--border-color); padding-bottom: 5px; color: #42522B;">AI Assistant</h3>
-                <div class="form-group">
-    <label for="deepseek_api_key">DeepSeek API Key</label>
-    
-    <!-- Wrapper to handle absolute positioning for the toggle icon -->
-    <div style="position: relative; display: flex; align-items: center;">
-        <input 
-            type="password" 
-            id="deepseek_api_key"
-            name="deepseek_api_key" 
-            value="<?php echo htmlspecialchars($settings['deepseek_api_key'] ?? ''); ?>" 
-            placeholder="sk-..."
-            style="width: 100%; padding-right: 40px;"
-        >
-        
-        <!-- Toggle Button with Eye Icon (SVG) -->
-        <button 
-            type="button" 
-            onclick="togglePasswordVisibility('deepseek_api_key', this)"
-            aria-label="Toggle password visibility"
-            style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; color: #666;"
-        >
-            <!-- Eye Icon (Visible state default) -->
-            <svg class="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-        </button>
-    </div>
-
-    <small style="color:#666; font-size:12px; display:block; margin-top:5px;">
-        Powers the Telegram bot's AI assistant — reading/answering questions, updating orders, and managing the menu. Get a key at platform.deepseek.com. Leave blank to disable the assistant (the bot will just tell you it isn't configured).
-    </small>
-</div>
-                <div class="form-group">
-                    <label for="deepseek_model">DeepSeek Model</label>
-                    <?php $currentModel = $settings['deepseek_model'] ?? 'deepseek-v4-flash'; ?>
-                    <select name="deepseek_model">
-                        <option value="deepseek-v4-pro" <?php echo $currentModel === 'deepseek-v4-pro' ? 'selected' : ''; ?>>DeepSeek V4 Pro — most capable, higher cost</option>
-                        <option value="deepseek-v4-flash" <?php echo $currentModel === 'deepseek-v4-flash' ? 'selected' : ''; ?>>DeepSeek V4 Flash — fast & cheap (recommended)</option>
-                        <option value="deepseek-reasoner" <?php echo $currentModel === 'deepseek-reasoner' ? 'selected' : ''; ?>>DeepSeek Reasoner (legacy — stops working July 24, 2026)</option>
-                        <option value="deepseek-chat" <?php echo $currentModel === 'deepseek-chat' ? 'selected' : ''; ?>>DeepSeek Chat (legacy — stops working July 24, 2026)</option>
-                    </select>
-                    <small style="color:#666; font-size:12px;">V4 Pro/Flash are the current models and won't expire. Reasoner/Chat are old names kept for now — switch off them before July 24, 2026.</small>
                 </div>
             </div>
 

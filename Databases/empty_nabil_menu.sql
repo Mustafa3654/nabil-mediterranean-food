@@ -181,7 +181,6 @@ CREATE TABLE `settings` (
   `value4_title` varchar(255) DEFAULT 'Warm Hospitality',
   `value4_desc` text DEFAULT NULL,
   `show_cart` tinyint(1) NOT NULL DEFAULT 1,
-  `deepseek_api_key` text DEFAULT NULL,
   `notify_contact_telegram` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

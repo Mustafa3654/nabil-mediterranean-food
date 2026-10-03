@@ -2,7 +2,7 @@
 
 The official website and menu management platform for **Nabil Mediterranean Food** (Warrensville Heights, Ohio) — a full PHP/MySQL application with a public storefront, online ordering, and a centralized admin dashboard.
 
-It features an elegant **Olive Green & Cream White theme**, a persistent **Dark Mode** toggle, active category border glow animations, a customer-facing cart with WhatsApp/SMS checkout, and an **AI-powered Telegram assistant** that lets the owner run the restaurant from their phone.
+It features an elegant **Olive Green & Cream White theme**, a persistent **Dark Mode** toggle, active category border glow animations, a customer-facing cart with WhatsApp/SMS checkout, and direct Telegram order notifications for the restaurant owner.
 
 ---
 
@@ -43,13 +43,8 @@ It features an elegant **Olive Green & Cream White theme**, a persistent **Dark 
   - Custom opening hour displays.
   - Telegram bot credentials for routing inquiries and orders to a Telegram chat.
 
-### 🤖 Telegram AI Assistant
-`telegram_webhook.php` turns the owner's Telegram chat into a control panel, backed by an LLM:
-- **Order status by natural language** — "15 ready", "cancel order 12".
-- **Questions answered** — "list pending orders", "how many cancelled today".
-- **Menu management** — add items, add categories, change prices.
-- **Destructive actions are guarded** — deleting an item or category always requires an explicit `YES` confirmation reply.
-- **One-tap customer texting** — when an order is marked *Ready for Pickup*, the bot attaches a "Text customer" button that opens the phone's Messages app with a pre-filled message (via the `sms_redirect.php` https → `sms:` bridge, since Telegram only permits https links on inline buttons).
+### 📲 Telegram Order Notifications
+Orders submitted from the website cart are saved in the database and sent directly to the configured Telegram chat, including customer contact details, requested time, items, total, and optional notes. The Telegram bot does not process chat commands.
 
 ---
 
@@ -60,7 +55,7 @@ It features an elegant **Olive Green & Cream White theme**, a persistent **Dark 
 - **Frontend**: HTML5, CSS3 (custom properties), Vanilla JavaScript
 - **Images**: GD library for WebP conversion
 - **Icons**: Font Awesome v5/v6 CDN
-- **Integrations**: Telegram Bot API, DeepSeek (AI assistant)
+- **Integrations**: Telegram Bot API
 - **Server Environment**: Apache with `mod_rewrite` (works locally on XAMPP/WampServer via `.htaccess`)
 
 ---
@@ -132,13 +127,12 @@ The SQL dumps in this repository ship with a placeholder admin account:
 Credentials are **not** stored in this repository — set them from the admin panel after install:
 
 - **Telegram**: create a bot with [@BotFather](https://t.me/BotFather), then enter the bot token and your chat ID under `admin/editTelegram.php`.
-- **Webhook**: point the bot at the deployed webhook so the AI assistant receives messages:
+- **Webhook**: the endpoint safely acknowledges Telegram updates; website order notifications are sent directly by `save_order.php`:
 
 ```bash
 curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://your-domain.com/telegram_webhook.php"
 ```
 
-- **AI assistant**: add a DeepSeek API key in the settings page to enable natural-language order and menu management.
 
 ---
 
@@ -157,7 +151,7 @@ rest_menu/
 ├── ingredients.php         # Dedicated menu item details page
 ├── contact.php             # Contact and location page with form and Telegram notifications
 ├── save_order.php          # Order submission endpoint (persists order + notifies Telegram)
-├── telegram_webhook.php    # AI-powered Telegram bot webhook (orders, menu, Q&A)
+├── telegram_webhook.php    # Minimal Telegram webhook endpoint
 ├── sms_redirect.php        # https -> sms: bridge for the bot's "Text customer" button
 ├── login.php               # Secure admin login gateway
 ├── logout.php              # Session destroyer script
