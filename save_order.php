@@ -130,7 +130,7 @@ if ($stmt->execute()) {
         $phoneDigits = preg_replace('/\D+/', '', $customer_phone);
         $replyMarkup = null;
         if ($phoneDigits !== '') {
-            $smsBody = "Hi {$customer_name}, we received your order #{$order_id}. We’ll be in touch shortly to confirm.";
+            $smsBody = "Hi {$customer_name}, we received your order. We’ll be in touch shortly to confirm.";
             $smsUrl = 'https://www.nabilmediterraneanfood.com/sms_redirect.php?' . http_build_query([
                 'to' => $phoneDigits,
                 'msg' => $smsBody,
