@@ -128,7 +128,7 @@ $globalHasPhoto = ($globalPhotoCheck && $globalPhotoCheck->num_rows > 0);
                             <?php elseif ($globalHasPhoto): ?>
                                 <div onclick="openQuickView(this)" style="cursor: pointer; display: block;">
                                 <div class="menu-card-img-container placeholder-img">
-                                    <img src="assets/images/items/placeholder-food.png" alt="No image" loading="lazy" class="menu-card-img" width="350" height="250">
+                                    <img src="assets/images/items/placeholder-food.webp" alt="No image" loading="lazy" class="menu-card-img" width="350" height="250">
                                 </div>
                                 </div>
                             <?php endif; ?>
