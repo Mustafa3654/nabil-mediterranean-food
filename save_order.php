@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 /* -------------------------
    Telegram helper function
 -------------------------- */
-function sendTelegramMessage($chat_id, $bot_token, $text)
+function sendTelegramMessage($chat_id, $bot_token, $text, $replyMarkup = null)
 {
     $url = "https://api.telegram.org/bot{$bot_token}/sendMessage";
 
@@ -15,6 +15,9 @@ function sendTelegramMessage($chat_id, $bot_token, $text)
         'text'       => $text,
         'parse_mode' => 'HTML'
     ];
+    if ($replyMarkup !== null) {
+        $data['reply_markup'] = json_encode($replyMarkup, JSON_UNESCAPED_UNICODE);
+    }
 
     $options = [
         'http' => [
@@ -124,7 +127,21 @@ if ($stmt->execute()) {
             $lines[] = "<b>Notes:</b> " . htmlspecialchars($notes);
         }
         $telegram_text = implode("\n", $lines);
-        sendTelegramMessage($telegram_chat_id, $telegram_bot_token, $telegram_text);
+        $phoneDigits = preg_replace('/\D+/', '', $customer_phone);
+        $replyMarkup = null;
+        if ($phoneDigits !== '') {
+            $smsBody = "Hi {$customer_name}, we received your order #{$order_id}. We’ll be in touch shortly to confirm.";
+            $smsUrl = 'https://www.nabilmediterraneanfood.com/sms_redirect.php?' . http_build_query([
+                'to' => $phoneDigits,
+                'msg' => $smsBody,
+            ]);
+            $replyMarkup = [
+                'inline_keyboard' => [[
+                    ['text' => '📩 Confirm with customer', 'url' => $smsUrl],
+                ]],
+            ];
+        }
+        sendTelegramMessage($telegram_chat_id, $telegram_bot_token, $telegram_text, $replyMarkup);
     }
 } else {
     http_response_code(500);

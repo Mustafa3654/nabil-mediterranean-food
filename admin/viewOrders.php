@@ -9,7 +9,7 @@ $csrfToken = ensure_csrf_token();
    Telegram helper function
 -------------------------- */
 if (!function_exists('sendTelegramMessage')) {
-    function sendTelegramMessage($chat_id, $bot_token, $text)
+    function sendTelegramMessage($chat_id, $bot_token, $text, $replyMarkup = null)
     {
         $url = "https://api.telegram.org/bot{$bot_token}/sendMessage";
 
@@ -18,6 +18,9 @@ if (!function_exists('sendTelegramMessage')) {
             'text'       => $text,
             'parse_mode' => 'HTML'
         ];
+        if ($replyMarkup !== null) {
+            $data['reply_markup'] = json_encode($replyMarkup, JSON_UNESCAPED_UNICODE);
+        }
 
         if (!function_exists('curl_init')) {
             return ['ok' => false, 'description' => 'The server cURL extension is unavailable.'];
@@ -155,7 +158,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resend_telegram'])) {
                     $lines_msg[] = "<b>Notes:</b> " . htmlspecialchars($order['notes']);
                 }
                 $telegram_text = implode("\n", $lines_msg);
-                $telegramResult = sendTelegramMessage($telegram_chat_id, $telegram_bot_token, $telegram_text);
+                $phoneDigits = preg_replace('/\D+/', '', $order['whatsapp_number'] ?? '');
+                $replyMarkup = null;
+                if ($phoneDigits !== '') {
+                    $customerName = $order['customer_name'] ?? 'there';
+                    $smsBody = "Hi {$customerName}, we received your order #{$order['id']}. We’ll be in touch shortly to confirm.";
+                    $smsUrl = 'https://www.nabilmediterraneanfood.com/sms_redirect.php?' . http_build_query([
+                        'to' => $phoneDigits,
+                        'msg' => $smsBody,
+                    ]);
+                    $replyMarkup = [
+                        'inline_keyboard' => [[
+                            ['text' => '📩 Confirm with customer', 'url' => $smsUrl],
+                        ]],
+                    ];
+                }
+                $telegramResult = sendTelegramMessage($telegram_chat_id, $telegram_bot_token, $telegram_text, $replyMarkup);
                 if ($telegramResult['ok']) {
                     header("Location: viewOrders?resended=1");
                     exit;
