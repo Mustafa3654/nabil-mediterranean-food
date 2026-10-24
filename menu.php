@@ -139,20 +139,22 @@ $globalHasPhoto = ($globalPhotoCheck && $globalPhotoCheck->num_rows > 0);
                                 <?php if (!empty($item['Ingredients']) && $item['Ingredients'] !== '0'): ?>
                                     <p class="menu-card-desc"><?php echo htmlspecialchars($item['Ingredients']); ?></p>
                                 <?php endif; ?>
-                                <div class="menu-card-price">
-                                    <?php 
-                                    $usd_price = $item['item_priceusd'] > 0 ? '$' . number_format($item['item_priceusd'], 2) : '';
-                                    if (!empty($item['price_suffix'])) {
-                                        $usd_price .= ' <small>' . htmlspecialchars($item['price_suffix']) . '</small>';
-                                    }
-                                    ?>
-                                    <span class="price-usd"><?php echo $usd_price; ?></span>
-                                </div>
-                                <?php if (!isset($settings['show_cart']) || (string)$settings['show_cart'] === '1'): ?>
-                                    <div class="cart-controls" onclick="event.stopPropagation();">
-                                        <!-- Buttons injected by JS -->
+                                <div class="menu-card-actions">
+                                    <div class="menu-card-price">
+                                        <?php
+                                        $usd_price = $item['item_priceusd'] > 0 ? '$' . number_format($item['item_priceusd'], 2) : '';
+                                        if (!empty($item['price_suffix'])) {
+                                            $usd_price .= ' <small>' . htmlspecialchars($item['price_suffix']) . '</small>';
+                                        }
+                                        ?>
+                                        <span class="price-usd"><?php echo $usd_price; ?></span>
                                     </div>
-                                <?php endif; ?>
+                                    <?php if (!isset($settings['show_cart']) || (string)$settings['show_cart'] === '1'): ?>
+                                        <div class="cart-controls" onclick="event.stopPropagation();">
+                                            <!-- Buttons injected by JS -->
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
 
