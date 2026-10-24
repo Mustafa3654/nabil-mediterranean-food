@@ -2,6 +2,7 @@
 includes/connection.php
 *.local.php
 .env
+assets/images
 
 # Editor / OS
 .vscode/
