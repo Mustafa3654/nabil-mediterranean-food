@@ -175,9 +175,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resend_telegram'])) {
                 }
                 $telegramResult = sendTelegramMessage($telegram_chat_id, $telegram_bot_token, $telegram_text, $replyMarkup);
                 if ($telegramResult['ok']) {
+                    $sent = 'sent';
+                    $notifiedAt = date('Y-m-d H:i:s');
+                    $clearError = null;
+                    $clearNextAttempt = null;
+                    $deliveryStmt = $conn->prepare("UPDATE orders SET telegram_status = ?, telegram_notified_at = ?, telegram_last_error = ?, telegram_attempts = telegram_attempts + 1, telegram_last_attempt_at = NOW(), telegram_next_attempt_at = ? WHERE id = ?");
+                    $deliveryStmt->bind_param('ssssi', $sent, $notifiedAt, $clearError, $clearNextAttempt, $order_id);
+                    $deliveryStmt->execute();
+                    $deliveryStmt->close();
                     header("Location: viewOrders?resended=1");
                     exit;
                 } else {
+                    $pending = 'pending';
+                    $error = substr((string)$telegramResult['description'], 0, 1000);
+                    $nextAttempt = date('Y-m-d H:i:s', time() + 60);
+                    $deliveryStmt = $conn->prepare("UPDATE orders SET telegram_status = ?, telegram_notified_at = NULL, telegram_last_error = ?, telegram_attempts = telegram_attempts + 1, telegram_last_attempt_at = NOW(), telegram_next_attempt_at = ? WHERE id = ?");
+                    $deliveryStmt->bind_param('sssi', $pending, $error, $nextAttempt, $order_id);
+                    $deliveryStmt->execute();
+                    $deliveryStmt->close();
                     header("Location: viewOrders?resend_failed=1&reason=" . urlencode($telegramResult['description']));
                     exit;
                 }
@@ -301,7 +316,17 @@ $statusLabels = [
                 ?>
                     <div class="order-card">
                         <div class="order-card-top">
-                            <span class="order-id">#<?php echo (int)$r['id']; ?></span>
+                            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                <span class="order-id">#<?php echo (int)$r['id']; ?></span>
+                                <?php
+                                    $telegramStatus = $r['telegram_status'] ?? null;
+                                    $telegramLabel = (int)($r['telegram_attempts'] ?? 0) === 0 ? 'Telegram not tracked' : ($telegramStatus === 'sent' ? 'Telegram sent' : ($telegramStatus === 'failed' ? 'Telegram failed' : 'Telegram not sent'));
+                                    $telegramColor = $telegramStatus === 'sent' ? '#2f6b3b' : ($telegramStatus === 'failed' ? '#a12622' : '#8a5a00');
+                                ?>
+                                <span style="font-size:12px; font-weight:600; color:<?php echo $telegramColor; ?>; background:#fff; border:1px solid currentColor; border-radius:12px; padding:3px 8px;">
+                                    <?php echo htmlspecialchars($telegramLabel); ?>
+                                </span>
+                            </div>
                             <span class="status-badge status-<?php echo htmlspecialchars($r['status'] ?? 'pending'); ?>">
                                 <?php echo htmlspecialchars($statusLabels[$r['status']] ?? ($r['status'] ?? 'pending')); ?>
                             </span>
